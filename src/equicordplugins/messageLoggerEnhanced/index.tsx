@@ -43,9 +43,10 @@ let oldGetMessage: typeof MessageStore.getMessage;
 
 const handledMessageIds = new Set();
 
-async function pluralKitCheck(message: any) {
-    const data = await fetch(`https://api.pluralkit.me/v2/messages/${encodeURIComponent(message.id)}`).then(res => res.json());
-    return message.id === data.original && !data.member?.keep_proxy;
+async function pluralKitCheck(messageId: any) {
+    if (!messageId) return false;
+    const data = await fetch(`https://api.pluralkit.me/v2/messages/${encodeURIComponent(messageId)}`).then(res => res.json());
+    return messageId === data.original && !data.member?.keep_proxy;
 }
 
 async function messageDeleteHandler(payload: MessageDeletePayload & { isBulk: boolean; }) {
@@ -85,7 +86,7 @@ async function messageDeleteHandler(payload: MessageDeletePayload & { isBulk: bo
                 flags: message?.flags,
                 ghostPinged,
                 isCachedByUs: (message as LoggedMessageJSON).ourCache
-            }) || (settings.store.ignorePluralKit && await pluralKitCheck(message))
+            }) || (settings.store.ignorePluralKit && await pluralKitCheck(message?.id))
         ) {
             // Flogger.log("IGNORING", message, payload);
             return FluxDispatcher.dispatch({
