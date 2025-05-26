@@ -42,6 +42,12 @@ const cacheThing = findByPropsLazy("commit", "getOrCreate");
 let oldGetMessage: typeof MessageStore.getMessage;
 
 const handledMessageIds = new Set();
+
+async function pluralKitCheck(message: any) {
+    const data = await fetch(`https://api.pluralkit.me/v2/messages/${encodeURIComponent(message.id)}`).then(res => res.json());
+    return message.id === data.original && !data.member?.keep_proxy;
+}
+
 async function messageDeleteHandler(payload: MessageDeletePayload & { isBulk: boolean; }) {
     if (payload.mlDeleted) {
         if (settings.store.permanentlyRemoveLogByDefault)
@@ -79,7 +85,7 @@ async function messageDeleteHandler(payload: MessageDeletePayload & { isBulk: bo
                 flags: message?.flags,
                 ghostPinged,
                 isCachedByUs: (message as LoggedMessageJSON).ourCache
-            })
+            }) || settings.store.ignorePluralKit && await pluralKitCheck(message)
         ) {
             // Flogger.log("IGNORING", message, payload);
             return FluxDispatcher.dispatch({
@@ -125,7 +131,7 @@ async function messageUpdateHandler(payload: MessageUpdatePayload) {
             flags: payload.message?.flags,
             ghostPinged: isGhostPinged(payload.message as any),
             isCachedByUs: cachedMessage?.ourCache ?? false
-        })
+        }) || settings.store.ignorePluralKit && await pluralKitCheck(message)
     ) {
         const cache = cacheThing.getOrCreate(payload.message.channel_id);
         const message = cache.get(payload.message.id);

@@ -61,6 +61,12 @@ export const settings = definePluginSettings({
         }
     },
 
+    ignorePluralKit: {
+        type: OptionType.BOOLEAN,
+        description: "Whether to ignore messages by PluralKit",
+        default: false,
+    },
+
     ignoreMutedGuilds: {
         default: false,
         type: OptionType.BOOLEAN,
